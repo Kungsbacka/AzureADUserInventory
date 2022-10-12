@@ -1,0 +1,4 @@
+Config.ps1
+Config.dev.ps1
+*.pfx
+deploy.ps1

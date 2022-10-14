@@ -37,7 +37,7 @@ $licenseTable = New-Object -TypeName 'System.Data.DataTable' -ArgumentList @('Az
 [void]$licenseTable.Columns.Add('state', 'string')
 [void]$licenseTable.Columns.Add('lastUpdatedDateTime', 'datetime')
 [void]$licenseTable.Columns.Add('assignedByGroup', 'guid')
-
+[void]$licenseTable.Columns.Add('assignedByGroupDisplayName', 'string')
 
 function ValueOrNull($value) {
     if ($value) {
@@ -56,6 +56,8 @@ function ToBool($value) {
         $false
     }
 }
+
+$groupCache = @{}
 
 foreach ($user in (Get-MgUser -Filter "userType eq 'Member'" -All -Property $properties)) {
     $onPremisesImmutableId = $null
@@ -77,6 +79,16 @@ foreach ($user in (Get-MgUser -Filter "userType eq 'Member'" -All -Property $pro
     $userTable.Rows.Add($row)
     
     foreach($license in $user.LicenseAssignmentStates) {
+        $groupDisplayName = [System.DBNull]::Value
+        if ($license.AssignedByGroup) {
+            if ($groupCache.ContainsKey($license.AssignedByGroup)) {
+                $groupDisplayName = $groupCache[$license.AssignedByGroup]
+            }
+            else {
+                $groupDisplayName = (Get-MgGroup -GroupId $license.AssignedByGroup).DisplayName
+                $groupCache[$license.AssignedByGroup] = $groupDisplayName
+            }
+        }
         $row = $licenseTable.NewRow()
         $row['userId'] = $user.Id
         $row['skuId'] = $license.SkuId
@@ -84,6 +96,7 @@ foreach ($user in (Get-MgUser -Filter "userType eq 'Member'" -All -Property $pro
         $row['state'] = ValueOrNull $license.State
         $row['lastUpdatedDateTime'] = ValueOrNull $license.LastUpdatedDateTime
         $row['assignedByGroup'] = ValueOrNull $license.AssignedByGroup
+        $row['assignedByGroupDisplayName'] = $groupDisplayName
         $licenseTable.Rows.Add($row)
     }
 }

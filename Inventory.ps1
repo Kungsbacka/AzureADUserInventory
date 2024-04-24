@@ -30,7 +30,6 @@ $userTable = New-Object -TypeName 'System.Data.DataTable' -ArgumentList @('Entra
 [void]$userTable.Columns.Add('userPrincipalName', 'string')
 
 $licenseTable = New-Object -TypeName 'System.Data.DataTable' -ArgumentList @('MicrosoftLicenseAssigned_stage')
-[void]$licenseTable.Columns.Add('id', 'int')
 [void]$licenseTable.Columns.Add('userId', 'guid')
 [void]$licenseTable.Columns.Add('skuId', 'guid')
 [void]$licenseTable.Columns.Add('error', 'boolean')
@@ -129,6 +128,5 @@ $cmd.CommandType = 'StoredProcedure'
 [void]$cmd.ExecuteNonQuery()
 
 $cmd.Dispose()
-
 
 $conn.Dispose()

@@ -19,7 +19,7 @@ $properties = @(
     'UserType'
 )
 
-$userTable = New-Object -TypeName 'System.Data.DataTable' -ArgumentList @('AzureADUser')
+$userTable = New-Object -TypeName 'System.Data.DataTable' -ArgumentList @('EntraIDUser_stage')
 [void]$userTable.Columns.Add('id', 'guid')
 [void]$userTable.Columns.Add('createdDateTime', 'datetime')
 [void]$userTable.Columns.Add('accountEnabled', 'boolean')
@@ -29,7 +29,7 @@ $userTable = New-Object -TypeName 'System.Data.DataTable' -ArgumentList @('Azure
 [void]$userTable.Columns.Add('onPremisesProvisioningErrors', 'boolean')
 [void]$userTable.Columns.Add('userPrincipalName', 'string')
 
-$licenseTable = New-Object -TypeName 'System.Data.DataTable' -ArgumentList @('AzureADAssignedLicense')
+$licenseTable = New-Object -TypeName 'System.Data.DataTable' -ArgumentList @('MicrosoftLicenseAssigned_stage')
 [void]$licenseTable.Columns.Add('id', 'int')
 [void]$licenseTable.Columns.Add('userId', 'guid')
 [void]$licenseTable.Columns.Add('skuId', 'guid')
@@ -108,22 +108,27 @@ $cmd = New-Object -TypeName 'System.Data.SqlClient.SqlCommand'
 $cmd.Connection = $conn
 $cmd.CommandType = 'Text'
 
-$cmd.CommandText = 'TRUNCATE TABLE dbo.AzureADUser'
+$cmd.CommandText = 'TRUNCATE TABLE dbo.EntraIDUser_stage'
 [void]$cmd.ExecuteNonQuery()
 
-$cmd.CommandText = 'TRUNCATE TABLE dbo.AzureADAssignedLicense'
+$cmd.CommandText = 'TRUNCATE TABLE dbo.MicrosoftLicenseAssigned_stage'
 [void]$cmd.ExecuteNonQuery()
-
-$cmd.Dispose()
 
 $bulkCopy = New-Object -TypeName 'System.Data.SqlClient.SqlBulkCopy' -ArgumentList @($conn)
-$bulkCopy.DestinationTableName = 'AzureADUser'
+$bulkCopy.DestinationTableName = 'EntraIDUser_stage'
 $bulkCopy.WriteToServer($userTable)
 $bulkCopy.Dispose()
 
 $bulkCopy = New-Object -TypeName 'System.Data.SqlClient.SqlBulkCopy' -ArgumentList @($conn)
-$bulkCopy.DestinationTableName = 'AzureADAssignedLicense'
+$bulkCopy.DestinationTableName = 'MicrosoftLicenseAssigned_stage'
 $bulkCopy.WriteToServer($licenseTable)
 $bulkCopy.Dispose()
+
+$cmd.CommandText = 'dbo.spCommitMicrosoftOnline'
+$cmd.CommandType = 'StoredProcedure'
+[void]$cmd.ExecuteNonQuery()
+
+$cmd.Dispose()
+
 
 $conn.Dispose()
